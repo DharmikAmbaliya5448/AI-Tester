@@ -14,30 +14,34 @@ describe("Server", () => {
   });
 
 
-  test("Server should listen on port 3000", () => {
-    expect(server.address().port).toBe(3000);
-  });
-
-  describe("POST /api", () => {
-    it("should return 404 for unsupported methods", async () => {
-      const res = await request(server).get("/api");
-      expect(res.status).toBe(404);
-    });
-  });
-
-  describe("Module Export", () => {
-    test("should export the express app", () => {
-      expect(typeof testedFile).toBe("object");
-      expect(testedFile.listen).toBeDefined();
+  it("should start the server on port 3000", (done) => {
+    server.listen(3000, () => {
+      request(server)
+        .get("/api")
+        .expect(404)
+        .end(done);
     });
   });
 
 
-  describe("JSON Middleware", () => {
-    it("should parse JSON payloads", async () => {
-      const res = await request(server).post("/api/test").send({test: "data"});
-      expect(res.status).toBe(404);
-    });
+  it("should handle JSON requests", () => {
+    const app = testedFile;
+    expect(app._router.stack.some(s => s.handle.name === 'jsonParser')).toBe(true)
+  });
+
+  it("should mount the router at /api", () => {
+    const app = testedFile;
+    expect(app._router.stack.some(s => s.route.path === '/api')).toBe(true);
+  });
+
+  it("should return 404 for invalid routes", (done) => {
+      request(testedFile)
+        .get("/invalid")
+        .expect(404, done);
+  });
+
+  it("should export the app object", () => {
+    expect(typeof testedFile).toBe("object");
   });
 
 

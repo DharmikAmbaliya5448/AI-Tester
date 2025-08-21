@@ -20,16 +20,6 @@ router.get("/items/:id", (req, res) => {
   res.status(200).json(item);
 });
 
-// GET item by name
-router.get("/items/name/:name", (req, res) => {
-  const name = req.params.name;
-  const item = items.find((i) => i.name === name);
-  if (!item) {
-    return res.status(404).json({ message: "Item not found" });
-  }
-  res.status(200).json(item);
-});
-
 // POST new item
 router.post("/items", (req, res) => {
   const newItem = req.body;
