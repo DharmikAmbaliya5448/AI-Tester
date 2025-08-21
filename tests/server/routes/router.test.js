@@ -3,7 +3,7 @@ const testedFile = require("../../../server/routes/router");
 
 describe("router", () => {
   describe("GET /items", () => {
-    it("should return all items", () => {
+    test("should return all items", () => {
       const req = {};
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -16,7 +16,7 @@ describe("router", () => {
   });
 
   describe("GET /items/:id", () => {
-    it("should return a single item", () => {
+    test("should return a single item", () => {
       const req = { params: { id: 1 } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -26,7 +26,7 @@ describe("router", () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ id: 1, name: "Book" });
     });
-    it("should return 400 for invalid ID", () => {
+    test("should return 400 for invalid ID", () => {
       const req = { params: { id: "abc" } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -36,7 +36,7 @@ describe("router", () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ error: "Invalid ID" });
     });
-    it("should return 404 for non-existent item", () => {
+    test("should return 404 for non-existent item", () => {
       const req = { params: { id: 2 } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -48,8 +48,41 @@ describe("router", () => {
     });
   });
 
+  describe("GET /items/:name", () => {
+    test("should return item by name", () => {
+      const req = { query: { name: "Book" } };
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+      testedFile.router.handle({ url: "/items?name=Book", method: "GET" }, req, res);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ id: 1, name: "Book" });
+    });
+    test("should return 400 if name is missing", () => {
+      const req = { query: {} };
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+      testedFile.router.handle({ url: "/items", method: "GET" }, req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: "Name query parameter is required" });
+    });
+    test("should return 404 if item not found", () => {
+      const req = { query: { name: "NonExistent" } };
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+      testedFile.router.handle({ url: "/items?name=NonExistent", method: "GET" }, req, res);
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ error: "Item not found" });
+    });
+  });
+
   describe("POST /items", () => {
-    it("should create a new item", () => {
+    test("should create a new item", () => {
       const req = { body: { id: 2, name: "Pencil" } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -58,9 +91,10 @@ describe("router", () => {
       testedFile.router.handle({ url: "/items", method: "POST" }, req, res);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({ id: 2, name: "Pencil" });
-      expect(testedFile.getItems()).toHaveLength(2);
+      expect(testedFile.getItems()).toEqual([{ id: 1, name: "Book" }, { id: 2, name: "Pencil" }]);
+      testedFile.resetItems();
     });
-    it("should return 400 for invalid item", () => {
+    test("should return 400 for invalid item", () => {
       const req = { body: { name: "Pencil" } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -70,7 +104,7 @@ describe("router", () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ error: "Invalid item" });
     });
-    it("should return 400 for existing item", () => {
+    test("should return 400 if item already exists", () => {
       const req = { body: { id: 1, name: "Pencil" } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -83,7 +117,7 @@ describe("router", () => {
   });
 
   describe("PUT /items/:id", () => {
-    it("should update an item", () => {
+    test("should update an item", () => {
       const req = { params: { id: 1 }, body: { name: "Updated Book" } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -92,8 +126,9 @@ describe("router", () => {
       testedFile.router.handle({ url: "/items/1", method: "PUT" }, req, res);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ id: 1, name: "Updated Book" });
+      testedFile.resetItems();
     });
-    it("should return 400 for invalid ID", () => {
+    test("should return 400 for invalid ID", () => {
       const req = { params: { id: "abc" }, body: { name: "Updated Book" } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -103,7 +138,7 @@ describe("router", () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ error: "Invalid ID" });
     });
-    it("should return 404 for non-existent item", () => {
+    test("should return 404 if item not found", () => {
       const req = { params: { id: 2 }, body: { name: "Updated Book" } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -116,7 +151,7 @@ describe("router", () => {
   });
 
   describe("DELETE /items/:id", () => {
-    it("should delete an item", () => {
+    test("should delete an item", () => {
       const req = { params: { id: 1 } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -125,9 +160,10 @@ describe("router", () => {
       testedFile.router.handle({ url: "/items/1", method: "DELETE" }, req, res);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ message: "Item deleted" });
-      expect(testedFile.getItems()).toHaveLength(0);
+      expect(testedFile.getItems()).toEqual([]);
+      testedFile.resetItems();
     });
-    it("should return 400 for invalid ID", () => {
+    test("should return 400 for invalid ID", () => {
       const req = { params: { id: "abc" } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -137,7 +173,7 @@ describe("router", () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ error: "Invalid ID" });
     });
-    it("should return 404 for non-existent item", () => {
+    test("should return 404 if item not found", () => {
       const req = { params: { id: 2 } };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -150,7 +186,7 @@ describe("router", () => {
   });
 
   describe("resetItems", () => {
-    it("should reset items to default", () => {
+    test("should reset items to default", () => {
       testedFile.setItems([{ id: 2, name: "test" }]);
       testedFile.resetItems();
       expect(testedFile.getItems()).toEqual([{ id: 1, name: "Book" }]);
@@ -158,14 +194,15 @@ describe("router", () => {
   });
 
   describe("setItems", () => {
-    it("should set items to new array", () => {
+    test("should set items to new array", () => {
       testedFile.setItems([{ id: 2, name: "test" }]);
       expect(testedFile.getItems()).toEqual([{ id: 2, name: "test" }]);
+      testedFile.resetItems();
     });
   });
 
   describe("getItems", () => {
-    it("should return current items", () => {
+    test("should return current items", () => {
       expect(testedFile.getItems()).toEqual([{ id: 1, name: "Book" }]);
     });
   });

@@ -26,6 +26,19 @@ router.get("/items/:id", (req, res) => {
   res.status(200).json(item);
 });
 
+// GET all items
+router.get("/items/:name", (req, res) => {
+  const name = req.query.name;
+  if (!name) {
+    return res.status(400).json({ error: "Name query parameter is required" });
+  }
+  const item = items.find((i) => i.name === name);
+  if (!item) {
+    return res.status(404).json({ error: "Item not found" });
+  }
+  res.status(200).json(item);
+});
+
 /**
  * POST new item
  */

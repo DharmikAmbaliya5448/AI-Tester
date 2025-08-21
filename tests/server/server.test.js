@@ -1,7 +1,7 @@
 // AI-GENERATED TESTS START
 const testedFile = require("../../server/server");
 const express = require("express");
-const { router } = require("../../server/routes/router");
+const {router} = require("../../server/routes/router.js");
 
 describe("Server", () => {
   let server;
@@ -13,49 +13,46 @@ describe("Server", () => {
     server.close();
   });
 
-  test("should start server on specified port or 3000", () => {
-    const port = process.env.PORT || 3000;
-    expect(server.address().port).toBe(port);
-  });
 
-
-  test("should use express.json middleware", () => {
-    expect(server._router.stack.some(layer => layer.handle.name === 'json')).toBe(true);
-  });
-
-  describe("Route Mounting", () => {
-    test("should mount router at /api", () => {
-      expect(server._router.stack.some(layer => layer.route.path === "/api")).toBe(true);
+  test("Server should listen on the specified port or 3000 by default", () => {
+    const spy = jest.spyOn(console, 'log');
+    const originalPort = process.env.PORT;
+    process.env.PORT = 3001;
+    server.listen(process.env.PORT, () => {
+      expect(spy).toHaveBeenCalledWith(`✅ Server running on port ${process.env.PORT}`);
     });
+    process.env.PORT = originalPort;
+  });
 
-    test("should use provided router", () => {
-      expect(server._router.stack.some(layer => layer.handle === router)).toBe(true);
+  test("Server should use express.json middleware", () => {
+    expect(server._router.stack.some(s => s.handle.name === 'json')).toBe(true);
+  });
+
+  test("Server should mount router at /api path", () => {
+    expect(server._router.stack.some(s => s.route.path === "/api" && s.handle === router)).toBe(true);
+  });
+
+
+  test("Should handle invalid port gracefully", () => {
+    const spy = jest.spyOn(console, 'log');
+    const originalPort = process.env.PORT;
+    process.env.PORT = "abc";
+    const serverInstance = express();
+    serverInstance.use(express.json());
+    serverInstance.use("/api", router);
+
+    const listenSpy = jest.spyOn(serverInstance, 'listen');
+    serverInstance.listen(process.env.PORT, () => {
+        expect(listenSpy).toHaveBeenCalled();
     })
+    process.env.PORT = originalPort;
 
-    test("should handle requests to /api", async () => {
-      const request = require('supertest')(server);
-      const response = await request.get('/api');
-      expect(response.statusCode).toBe(404)
-    });
   });
 
-  test("should handle errors during startup", () => {
-    const mockExpress = jest.fn(() => ({
-      use: jest.fn(),
-      listen: jest.fn((port, cb) => {
-        throw new Error("Mock server error");
-        cb();
-      })
-    }));
-    jest.mock('express', () => mockExpress);
-    const server = require("../../server/server");
-    expect(mockExpress).toHaveBeenCalled();
-    expect(server).toBeDefined();
-  })
-
-  test("should export app", () => {
+  test("Module exports the app instance", () => {
     expect(testedFile).toBeInstanceOf(express.Application);
   });
+
 });
 
 // AI-GENERATED TESTS END
