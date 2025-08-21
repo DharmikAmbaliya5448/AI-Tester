@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
+
 // In-memory store for demo
 let items = [{ id: 1, name: "Book" }];
 
@@ -13,6 +14,16 @@ router.get("/items", (req, res) => {
 router.get("/items/:id", (req, res) => {
   const id = parseInt(req.params.id, 10);
   const item = items.find((i) => i.id === id);
+  if (!item) {
+    return res.status(404).json({ message: "Item not found" });
+  }
+  res.status(200).json(item);
+});
+
+// GET item by name
+router.get("/items/name/:name", (req, res) => {
+  const name = req.params.name;
+  const item = items.find((i) => i.name === name);
   if (!item) {
     return res.status(404).json({ message: "Item not found" });
   }
@@ -40,6 +51,8 @@ router.delete("/items/:id", (req, res) => {
   }
   res.status(200).json({ message: "Item deleted" });
 });
+
+
 
 // Utility for tests
 function resetItems() {
