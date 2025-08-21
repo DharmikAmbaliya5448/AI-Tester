@@ -7,14 +7,19 @@ app.use(express.json());
 // Mount router
 app.use("/api", router);
 
-if (require.main === module) {
-  app.listen(3000, () => {
-    console.log("Server running on port 3000");
+/**
+ * Exported start function (for tests + manual start)
+ */
+function startServer(port = process.env.PORT || 3000) {
+  return app.listen(port, () => {
+    console.log(`✅ Server running on port ${port}`);
   });
 }
 
-// app.listen(3000, () => {
-//   console.log("Server running on port 3000");
-// });
+// Only auto-start if run directly: `node server.js`
+if (require.main === module) {
+  startServer();
+}
 
-module.exports = app;
+// Export both app & startServer for tests
+module.exports = { app, startServer };
