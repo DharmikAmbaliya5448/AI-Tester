@@ -1,4 +1,5 @@
 const express = require("express");
+const { route } = require("../server");
 const router = express.Router();
 
 // In-memory store (demo only, resets on server restart)
@@ -72,6 +73,15 @@ router.put("/items/:id", (req, res) => {
   items[itemIndex] = updatedItem;
 
   res.status(200).json(updatedItem);
+});
+
+router.get("/items/name/:name", (req, res) => {
+  const name = req.params.name;
+  const item = items.find((i) => i.name === name);
+  if (!item) {
+    return res.status(404).json({ error: "Item not found" });
+  }
+  res.status(200).json(item);
 });
 
 /**
